@@ -4,32 +4,33 @@ import requests
 import configparser
 import urlparse
 import logging
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
 
 class Connect6Scraper(object):
 
-    '''
+    """
     A simple class to scrape names from connect6.com
-    '''
+    """
 
     def __init__(self, domain, Verbose=False):
         config = configparser.ConfigParser()
         try:
             self.logger = logging.getLogger("SimplyEmail.Connect6")
-            config.read('Common/SimplyEmail.ini')
+            config.read("Common/SimplyEmail.ini")
             self.UserAgent = {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
+            }
             self.domain = domain
-            self.FinalAnswer = ''
+            self.FinalAnswer = ""
             self.verbose = Verbose
         except Exception as e:
             print e
 
-    '''
+    """
     Try to find the connect6 url for the domain
     you are trageting.
-    '''
+    """
 
     def Connect6AutoUrl(self):
         # Using startpage to attempt to get the URL
@@ -37,22 +38,23 @@ class Connect6Scraper(object):
         try:
             # This returns a JSON object
             urllist = []
-            domain = self.domain.split('.')
-            url = "https://www.google.com/search?q=site:connect6.com+%22" + \
-                domain[0] + '%22'
+            domain = self.domain.split(".")
+            url = (
+                "https://www.google.com/search?q=site:connect6.com+%22"
+                + domain[0]
+                + "%22"
+            )
             r = requests.get(url, headers=self.UserAgent)
         except Exception as e:
-            error = "[!] Major issue with Google Search: for Connect6 URL" + \
-                str(e)
+            error = "[!] Major issue with Google Search: for Connect6 URL" + str(e)
             print helpers.color(error, warning=True)
         try:
             rawhtml = r.content
             soup = BeautifulSoup(rawhtml)
-            for a in soup.findAll('a', href=True):
+            for a in soup.findAll("a", href=True):
                 try:
-                    l = urlparse.parse_qs(
-                        urlparse.urlparse(a['href']).query)['q']
-                    if 'site:connect6.com' not in l[0]:
+                    l = urlparse.parse_qs(urlparse.urlparse(a["href"]).query)["q"]
+                    if "site:connect6.com" not in l[0]:
                         l = l[0].split(":")
                         urllist.append(l[2])
                 except:
@@ -71,22 +73,21 @@ class Connect6Scraper(object):
             return urllist
 
     def Connect6Download(self, url):
-        '''
+        """
         Downloads raw source of Connect6 page.
-        '''
+        """
         NameList = []
         try:
-            if url.startswith('http') or url.startswith('https'):
+            if url.startswith("http") or url.startswith("https"):
                 r = requests.get(url, headers=self.UserAgent)
             else:
-                url = 'http://' + str(url)
+                url = "http://" + str(url)
                 if self.verbose:
                     p = " [*] Now downloading Connect6 Source: " + str(url)
                     print helpers.color(p, firewall=True)
                 r = requests.get(url, headers=self.UserAgent)
         except Exception as e:
-            error = " [!] Major issue with Downloading Connect6 source:" + \
-                str(e)
+            error = " [!] Major issue with Downloading Connect6 source:" + str(e)
             print helpers.color(error, warning=True)
         try:
             if r:
@@ -94,11 +95,10 @@ class Connect6Scraper(object):
                 soup = BeautifulSoup(rawhtml)
                 try:
                     for utag in soup.findAll("ul", {"class": "directoryList"}):
-                        for litag in utag.findAll('li'):
+                        for litag in utag.findAll("li"):
                             NameList.append(litag.text)
                             if self.verbose:
-                                p = " [*] Connect6 Name Found: " + \
-                                    str(litag.text)
+                                p = " [*] Connect6 Name Found: " + str(litag.text)
                                 print helpers.color(p, firewall=True)
                 except:
                     pass
@@ -108,10 +108,10 @@ class Connect6Scraper(object):
             print e
 
     def Connect6ParseName(self, raw):
-        '''
+        """
         Takes a raw non parsed name from connect 6.
         Returns a list of the Name [first, last]
-        '''
+        """
         # Adapted by:
         #   Author: @Harmj0y
         #   Author Blog: http://t.co/ZYPKvkeayX
@@ -138,7 +138,7 @@ class Connect6Scraper(object):
                 if "LinkedIn" in raw:
                     return None
 
-                if "\"" in raw:
+                if '"' in raw:
                     return None
 
                 parts = raw.split()
@@ -171,8 +171,8 @@ class Connect6Scraper(object):
                 if len(lastName) < 2:
                     return None
 
-                if "\"" in lastName:
-                    lastName = lastName.replace("\"", "")
+                if '"' in lastName:
+                    lastName = lastName.replace('"', "")
 
                 if "'" in lastName:
                     lastName = lastName.replace("'", "")
@@ -180,4 +180,4 @@ class Connect6Scraper(object):
                 else:
                     return [firstName, lastName]
         except Exception as e:
-            e = ' [!] Failed to parse name: ' + str(e)
+            e = " [!] Failed to parse name: " + str(e)

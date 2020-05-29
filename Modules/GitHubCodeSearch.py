@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import configparser
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 from Helpers import Download
 from Helpers import Parser
 from Helpers import helpers
@@ -39,23 +39,26 @@ from Helpers import helpers
 
 
 class ClassName(object):
-
     def __init__(self, domain, verbose=False):
         self.apikey = False
         self.name = "Searching GitHub Code"
-        self.description = "Search GitHub code for emails using a large pool of code searches"
+        self.description = (
+            "Search GitHub code for emails using a large pool of code searches"
+        )
         self.domain = domain
         config = configparser.ConfigParser()
         self.Html = ""
         self.verbose = verbose
         try:
-            self.UserAgent = {
-                'User-Agent': helpers.getua()}
-            config.read('Common/SimplyEmail.ini')
-            self.Depth = int(config['GitHubSearch']['PageDepth'])
-            self.Counter = int(config['GitHubSearch']['QueryStart'])
+            self.UserAgent = {"User-Agent": helpers.getua()}
+            config.read("Common/SimplyEmail.ini")
+            self.Depth = int(config["GitHubSearch"]["PageDepth"])
+            self.Counter = int(config["GitHubSearch"]["QueryStart"])
         except:
-            print helpers.color(" [*] Major Settings for GitHubSearch are missing, EXITING!\n", warning=True)
+            print helpers.color(
+                " [*] Major Settings for GitHubSearch are missing, EXITING!\n",
+                warning=True,
+            )
 
     def execute(self):
         self.process()
@@ -69,24 +72,28 @@ class ClassName(object):
         UrlList = []
         while self.Counter <= self.Depth:
             if self.verbose:
-                p = ' [*] GitHub Code Search on page: ' + str(self.Counter)
+                p = " [*] GitHub Code Search on page: " + str(self.Counter)
                 print helpers.color(p, firewall=True)
             try:
-                url = "https://github.com/search?p=" + str(self.Counter) + "&q=" + \
-                    str(self.domain) + "+&ref=searchresults&type=Code&utf8=✓"
+                url = (
+                    "https://github.com/search?p="
+                    + str(self.Counter)
+                    + "&q="
+                    + str(self.domain)
+                    + "+&ref=searchresults&type=Code&utf8=✓"
+                )
                 r = dl.requesturl(url, useragent=self.UserAgent, raw=True, timeout=10)
                 if r.status_code != 200:
                     break
             except Exception as e:
-                error = " [!] Major isself.Counter += 1sue with GitHub Search:" + \
-                    str(e)
+                error = " [!] Major isself.Counter += 1sue with GitHub Search:" + str(e)
                 print helpers.color(error, warning=True)
             RawHtml = r.content
             # Parse the results for our URLS)
             soup = BeautifulSoup(RawHtml)
-            for a in soup.findAll('a', href=True):
-                a = a['href']
-                if a.startswith('/'):
+            for a in soup.findAll("a", href=True):
+                a = a["href"]
+                if a.startswith("/"):
                     UrlList.append(a)
             self.Counter += 1
         # Now take all gathered URL's and gather the HTML content needed

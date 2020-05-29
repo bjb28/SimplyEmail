@@ -11,31 +11,32 @@ import time
 from Helpers import Download
 from Helpers import helpers
 from Helpers import Parser
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
 
 class ClassName(object):
-
     def __init__(self, Domain, verbose=False):
         self.apikey = False
         self.name = "Google CSV Search for Emails"
         self.description = "Uses Google Dorking to search for emails"
         config = configparser.ConfigParser()
         try:
-            config.read('Common/SimplyEmail.ini')
+            config.read("Common/SimplyEmail.ini")
             self.Domain = Domain
-            self.Quanity = int(config['GoogleCsvSearch']['StartQuantity'])
-            self.UserAgent = {
-                'User-Agent': helpers.getua()}
-            self.Limit = int(config['GoogleCsvSearch']['QueryLimit'])
-            self.Counter = int(config['GoogleCsvSearch']['QueryStart'])
-            self.Sleep = int(config['SleepConfig']['QuerySleep'])
-            self.Jitter = int(config['SleepConfig']['QueryJitter'])
+            self.Quanity = int(config["GoogleCsvSearch"]["StartQuantity"])
+            self.UserAgent = {"User-Agent": helpers.getua()}
+            self.Limit = int(config["GoogleCsvSearch"]["QueryLimit"])
+            self.Counter = int(config["GoogleCsvSearch"]["QueryStart"])
+            self.Sleep = int(config["SleepConfig"]["QuerySleep"])
+            self.Jitter = int(config["SleepConfig"]["QueryJitter"])
             self.verbose = verbose
             self.urlList = []
             self.Text = ""
         except:
-            print helpers.color(" [*] Major Settings for GoogleCsvSearch are missing, EXITING!\n", warning=True)
+            print helpers.color(
+                " [*] Major Settings for GoogleCsvSearch are missing, EXITING!\n",
+                warning=True,
+            )
 
     def execute(self):
         self.search()
@@ -47,19 +48,24 @@ class ClassName(object):
         while self.Counter <= self.Limit and self.Counter <= 100:
             time.sleep(1)
             if self.verbose:
-                p = ' [*] Google CSV Search on page: ' + str(self.Counter)
+                p = " [*] Google CSV Search on page: " + str(self.Counter)
                 print helpers.color(p, firewall=True)
             try:
-                url = "https://www.google.com/search?q=site:" + \
-                    self.Domain + "+filetype:csv&start=" + str(self.Counter)
+                url = (
+                    "https://www.google.com/search?q=site:"
+                    + self.Domain
+                    + "+filetype:csv&start="
+                    + str(self.Counter)
+                )
             except Exception as e:
                 error = " [!] Major issue with Google Search:" + str(e)
                 print helpers.color(error, warning=True)
             try:
                 RawHtml = dl.requesturl(url, useragent=self.UserAgent)
             except Exception as e:
-                error = " [!] Fail during Request to Google (Check Connection):" + \
-                    str(e)
+                error = " [!] Fail during Request to Google (Check Connection):" + str(
+                    e
+                )
                 print helpers.color(error, warning=True)
             # check for captcha
             try:
@@ -69,14 +75,13 @@ class ClassName(object):
                 print e
             soup = BeautifulSoup(RawHtml)
             # I use this to parse my results, for URLS to follow
-            for a in soup.findAll('a'):
+            for a in soup.findAll("a"):
                 try:
                     # https://stackoverflow.com/questions/21934004/not-getting-proper-links-
                     # from-google-search-results-using-mechanize-and-beautifu/22155412#22155412?
                     # newreg=01f0ed80771f4dfaa269b15268b3f9a9
-                    l = urlparse.parse_qs(
-                        urlparse.urlparse(a['href']).query)['q'][0]
-                    if l.startswith('http') or l.startswith('www'):
+                    l = urlparse.parse_qs(urlparse.urlparse(a["href"]).query)["q"][0]
+                    if l.startswith("http") or l.startswith("www"):
                         if "webcache.googleusercontent.com" not in l:
                             self.urlList.append(l)
                 except:
@@ -87,21 +92,22 @@ class ClassName(object):
         try:
             for url in self.urlList:
                 if self.verbose:
-                    p = ' [*] Google CSV search downloading: ' + str(url)
+                    p = " [*] Google CSV search downloading: " + str(url)
                     print helpers.color(p, firewall=True)
                 try:
                     filetype = ".csv"
                     FileName, FileDownload = dl.download_file2(url, filetype)
                     if FileDownload:
                         if self.verbose:
-                            p = '[*] Google CSV file was downloaded: ' + \
-                                str(url)
+                            p = "[*] Google CSV file was downloaded: " + str(url)
                             print helpers.color(p, firewall=True)
                         with open(FileName) as f:
                             self.Text += f.read()
                     # print self.Text
                 except Exception as e:
-                    print helpers.color(" [!] Issue with opening CSV Files\n", firewall=True)
+                    print helpers.color(
+                        " [!] Issue with opening CSV Files\n", firewall=True
+                    )
                 try:
                     dl.delete_file(FileName)
                 except Exception as e:

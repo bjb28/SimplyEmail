@@ -14,7 +14,7 @@ from Helpers import Converter
 from Helpers import helpers
 from Helpers import Parser
 from Helpers import Download
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
 
 class ClassName(object):
